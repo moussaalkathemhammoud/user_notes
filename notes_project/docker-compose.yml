@@ -1,13 +1,24 @@
 services:
   db:
-    image: mysql:8
+    image: postgres:16
     restart: always
     environment:
-      MYSQL_DATABASE: db_users
-      MYSQL_ROOT_PASSWORD: kathem_00x
+      POSTGRES_USER: root
+      POSTGRES_DB: db_users
+      POSTGRES_PASSWORD: dbpassword
     ports:
-      - "3307:3306"
+      - "5432:5432"
   web:
+    secrets:
+      - django_secret_key
+    environment:
+      DJANGO_SECRET_KEY: /run/secrets/django_secret_key
+      DEBUG: "1"
+      DB_NAME: db_users
+      DB_USER: root
+      DB_PASSWORD: dbpassword
+      DB_HOST: db
+      DB_PORT: 5432
     build: .
     ports:
       - "8000:8000"
@@ -15,7 +26,8 @@ services:
       - .env
     depends_on:
       - db
-    command: >
-      sh -c "./wait-for-it.sh db:3306 -- 
-      python manage.py migrate && 
-      python manage.py runserver 0.0.0.0:8000"
+    command: python manage.py runserver 0.0.0.0:8000
+
+secrets:
+  django_secret_key:
+    file: ./django_secret_key.txt

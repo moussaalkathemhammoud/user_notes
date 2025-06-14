@@ -9,18 +9,11 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 import environ
 
 from datetime import timedelta
-
-SIMPLE_JWT = {
-    "USER_ID_FIELD": "email",
-    "USER_ID_CLAIM": "user_id",
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
 env = environ.Env()
 environ.Env.read_env('.env')
 
@@ -32,10 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+with open('/run/secrets/django_secret_key',encoding='utf-8', errors='ignore') as f:
+    SECRET_KEY = f.read().strip()
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG") == "1"
 
 ALLOWED_HOSTS = []
 
@@ -50,7 +45,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',
     'user_notes',
 ]
 
@@ -89,12 +83,12 @@ WSGI_APPLICATION = 'notes_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_users',
-        'USER': 'root',
-        'PASSWORD': env('DB_PASSWORD'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
         'HOST': 'db',
-        'PORT': '3306',
+        'PORT': '5432',
     }
 
 }
@@ -142,11 +136,16 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'user_notes.MyUser'
+from datetime import timedelta
 
+#SIMPLE_JWT = {
+ #   "USER_ID_FIELD": "email",
+  #  "USER_ID_CLAIM": "user_id",
+  #  "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+   # "AUTH_HEADER_TYPES": ("Bearer",),
+#}
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+
 }
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
